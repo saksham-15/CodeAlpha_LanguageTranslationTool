@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Language Translation Tool</title>
+  <style>
+    :root{--ink:#15243d;--blue:#2867d8;--line:#d7e0ef}*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:24px;display:grid;place-items:center;font:16px/1.45 system-ui,sans-serif;color:var(--ink);background:#eff5ff}main{width:min(820px,100%);padding:32px;border-radius:18px;background:#fff;box-shadow:0 18px 48px #1736691c}h1{margin:0}p{color:#65738b}.languages{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end}label{display:grid;gap:6px;font-weight:700}select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;font:inherit}textarea{min-height:160px;resize:vertical;margin-top:18px}button{border:0;border-radius:10px;padding:12px 16px;background:var(--blue);color:#fff;font:inherit;font-weight:700;cursor:pointer}#swap{background:#e8effd;color:#174795}.translate{width:100%;margin-top:18px}.result{min-height:105px;margin-top:20px;padding:16px;border:1px solid #cbdaf7;border-radius:10px;background:#f5f8ff;white-space:pre-wrap}.actions{margin-top:10px;display:flex;justify-content:flex-end}.secondary{background:#e8effd;color:#174795}@media(max-width:560px){main{padding:22px}.languages{grid-template-columns:1fr}#swap{justify-self:start}}
+  </style>
+</head>
+<body><main>
+  <h1>Language Translation Tool</h1><p>Translate text securely using Microsoft Translator.</p>
+  <div class="languages"><label>From<select id="from"></select></label><button id="swap" type="button" aria-label="Swap languages">⇄</button><label>To<select id="to"></select></label></div>
+  <label><textarea id="text" placeholder="Type or paste text here…" maxlength="5000" aria-label="Text to translate"></textarea></label>
+  <button class="translate" id="translate" type="button">Translate</button>
+  <section class="result" id="result" aria-live="polite">Your translation will appear here.</section><div class="actions"><button class="secondary" id="copy" type="button" disabled>Copy translation</button></div>
+</main>
+<script>
+const languages=[['auto','Detect language'],['ar','Arabic'],['bn','Bengali'],['de','German'],['en','English'],['es','Spanish'],['fr','French'],['hi','Hindi'],['it','Italian'],['ja','Japanese'],['ko','Korean'],['pt','Portuguese'],['ru','Russian'],['ta','Tamil'],['te','Telugu'],['zh-Hans','Chinese (Simplified)']];
+const from=document.querySelector('#from'),to=document.querySelector('#to'),text=document.querySelector('#text'),result=document.querySelector('#result'),translate=document.querySelector('#translate'),copy=document.querySelector('#copy');
+function setOptions(select,auto){select.innerHTML=languages.filter(([code])=>auto||code!=='auto').map(([code,name])=>`<option value="${code}">${name}</option>`).join('')}setOptions(from,true);setOptions(to,false);from.value='auto';to.value='hi';
+document.querySelector('#swap').onclick=()=>{if(from.value==='auto')return;[from.value,to.value]=[to.value,from.value]};
+document.querySelector('#translate').onclick=async()=>{const value=text.value.trim();if(!value){result.textContent='Enter text to translate.';return}translate.disabled=true;copy.disabled=true;result.textContent='Translating…';try{const response=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:value,from:from.value,to:to.value})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Translation failed.');result.textContent=data.translation;copy.disabled=false}catch(error){result.textContent=error.message}finally{translate.disabled=false}};
+copy.onclick=async()=>{await navigator.clipboard.writeText(result.textContent);copy.textContent='Copied!';setTimeout(()=>copy.textContent='Copy translation',1200)};
+</script></body></html>
